@@ -2,8 +2,10 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
-var mysql = require('mysql');
+var passport = require('passport');
+var {PORT} = require('./config');
 
+var authRoutes = require('./routes/auth');
 var availabilityRoutes = require('./routes/availability');
 var clubRoutes = require('./routes/clubs');
 var divisionsRoutes = require('./routes/divisions');
@@ -14,15 +16,18 @@ var teamsRoutes = require('./routes/teams');
 var umpireRoutes = require('./routes/umpires');
 var venuesRoutes = require('./routes/venues');
 var apiRoutes = express.Router();
-apiRoutes.use('/availability', availabilityRoutes);
-apiRoutes.use('/clubs', clubRoutes);
-apiRoutes.use('/divisions', divisionsRoutes);
-apiRoutes.use('/fixtures', fixturesRoutes);
-apiRoutes.use('/leagues', leaguesRoutes);
-apiRoutes.use('/qualifications', qualificationRoutes);
-apiRoutes.use('/teams', teamsRoutes);
-apiRoutes.use('/umpires', umpireRoutes);
-apiRoutes.use('/venues', venuesRoutes);
+apiRoutes.use('/auth', authRoutes);
+apiRoutes.use('/availability', passport.authenticate('jwt', {session: false}), availabilityRoutes);
+apiRoutes.use('/clubs', passport.authenticate('jwt', {session: false}), clubRoutes);
+apiRoutes.use('/divisions', passport.authenticate('jwt', {session: false}), divisionsRoutes);
+apiRoutes.use('/fixtures', passport.authenticate('jwt', {session: false}), fixturesRoutes);
+apiRoutes.use('/leagues', passport.authenticate('jwt', {session: false}),leaguesRoutes);
+apiRoutes.use('/qualifications', passport.authenticate('jwt', {session: false}), qualificationRoutes);
+apiRoutes.use('/teams', passport.authenticate('jwt', {session: false}), teamsRoutes);
+apiRoutes.use('/umpires', passport.authenticate('jwt', {session: false}), umpireRoutes);
+apiRoutes.use('/venues', passport.authenticate('jwt', {session: false}), venuesRoutes);
+
+require('./passport');
 
 var app = express();
 
@@ -30,6 +35,8 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+app.use('/api/v1', apiRoutes);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -47,19 +54,4 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-// database connection
-app.use(function(err, req, res, next) {
-  res.locals.connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'rhcumpires'
-  });
-  res.locals.connection.connect();
-  next();
-});
-
-app.use('/api/v1', apiRoutes);
-
-port = process.env.PORT || 3001;
-app.listen(port);
+app.listen(PORT);

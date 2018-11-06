@@ -5,7 +5,7 @@ module.exports.readUmpires = (connection, callback) => {
     if(err) callback(500, err);
     else{
       var umpires = [];
-      result.forEach(umpire => {
+      result.map(umpire => {
         qualificationCRUD.readUmpireQualifiaction(connection, umpire.umpireID, (status, result) => {
           if(status === 500) callback(500, result);
           else umpires.push({...umpire, result});
