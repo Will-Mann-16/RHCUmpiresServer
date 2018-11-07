@@ -1,50 +1,34 @@
-var divisionCRUD = require("./divisions");
-
-module.exports.readLeagues = (connection, callback) => {
-  connection.query("SELECT * FROM LeagueTable", function(err, result, fields){
-    if(err) callback(500, err);
-    else callback(200, result);
-  });
+var db = require('../database');
+module.exports.readLeagues = () => {
+  return db.read('LeagueTable');
 };
 
-module.exports.readLeague = (connection, leagueID, callback) => {
-  connection.query("SELECT * FROM LeagueTable WHERE leagueID=" + leagueID + " LIMIT 1", function(err, result, fields){
-    if (err) callback(500, err);
-    else callback(200, result[0]);
-  });
+module.exports.readLeague = (leagueID) => {
+    return db.read('LeagueTable', {condition: `leagueID=${leagueID}`, limit: 1});
 };
 
-module.exports.readLeagueAndDivision = (connection, leagueID, callback) => {
-  module.exports.readLeague(connection, leagueID, (status, league) => {
-    if(status === 500) callback(500, league);
-    else{
-      divisionCRUD.readDivision(connection, league.divisionFK, (status, division) => {
-          if(status === 500) callback(500, division);
-          else callback(200, {...league, division});
-      })
-    }
-  })
+module.exports.readLeagueAndDivision = async (leagueID) => {
+  try {
+      var league = await db.read('LeagueTable', {condition: `leagueID=${leagueID}`, limit: 1});
+      var division = await db.read('DivisionTable', {condition: `divisionID=${league.divisionFK}`, limit: 1});
+      return Promise.resolve({...league, division});
+  } catch (e){
+    return Promise.reject(e);
+  }
 };
 
-module.exports.createLeague = (connection, league, callback) => {
-  connection.query("INSERT INTO LeagueTable (Name, divisionFK, qualificationFK) VALUES ?", [league.Name, league.divisionFK, league.qualificationFK], function(err, result, fields){
-    if (err) callback(500, err);
-    else callback(200, result.insertId);
-  });
+module.exports.createLeague = (league) => {
+    return db.create('LeagueTable', league, {returnRow: true, idSelector: 'leagueID'});
 };
 
-module.exports.updateLeague = (connection, leagueID, league, callback) => {
-  connection.query(`UPDATE LeagueTable SET Name='${league.Name}', divisionFK=${league.divisionFK}, qualificationFK=${league.qualificationFK} WHERE leagueID=${leagueID}`, function(err, result, fields){
-    if (err) callback(500, err);
-    else callback(200, result.insertId);
-  });
+module.exports.updateLeague = (leagueID, league) => {
+    return db.update('LeagueTable', league, {returnRow: true, idSelector: 'leagueID', id: leagueID});
+
 };
 
-module.exports.deleteLeague = (connection, leagueID, callback) => {
-  connection.query(`DELETE FROM LeagueTable WHERE leagueID=${leagueID}`, function(err, result, fields){
-    if (err) callback(500, err);
-    else callback(200, true);
-  });
+module.exports.deleteLeague = (leagueID) => {
+    return db.delete('LeagueTable', {id: leagueID, idSelector: 'leagueID'});
+
 };
 
 

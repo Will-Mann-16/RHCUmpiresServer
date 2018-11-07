@@ -1,36 +1,21 @@
 
 module.exports.readVenues = (connection, callback) => {
-  connection.query("SELECT * FROM VenueTable", function(err, result, fields){
-    if(err) callback(500, err);
-    else callback(200, result);
-  });
+    return db.read('FixtureTable');
 };
 
 module.exports.readVenue = (connection, venueID, callback) => {
-  connection.query("SELECT * FROM VenueTable WHERE venueID=" + venueID + " LIMIT 1", function(err, result, fields){
-    if (err) callback(500, err);
-    else callback(200, result[0]);
-  });
+    return db.read('FixtureTable', {condition: `fixtureID=${fixtureID}`, limit: 1});
 };
 
 module.exports.createVenue = (connection, venue, callback) => {
-  connection.query("INSERT INTO VenueTable (Name, Address) VALUES ?", [venue.Name, venue.Address], function(err, result, fields){
-    if (err) return callback(500, error);
-    else callback(200, result.insertId);
-  });
+    return db.create('FixtureTable', fixture, {returnRow: true, idSelector: 'fixtureID'});
 };
 
 module.exports.updateVenue = (connection, venueID, venue, callback) => {
-  connection.query(`UPDATE VenueTable SET Name='${venue.Name}', Address='${venue.Address}' WHERE venueID=${venueID}`, function(err, result, fields){
-    if (err) callback(500, err);
-    else callback(200, result.insertId);
-  });
+    return db.update('FixtureTable', fixture, {returnRow: true, idSelector: 'fixtureID', id: fixtureID});
 };
 module.exports.deleteVenue = (connection, venueID, callback) => {
-  connection.query(`DELETE FROM VenueTable WHERE venueID=${venueID}`, function(err, result, fields){
-    if (err) callback(500, err);
-    else callback(200, true);
-  });
+    return db.delete('FixtureTable', {id: fixtureID, idSelector: 'fixtureID'});
 };
 
 

@@ -1,66 +1,47 @@
-var umpireCRUD = require("./umpires");
+var db = require('../database');
 
-module.exports.readFixtures = (connection, callback) => {
-  connection.query("SELECT * FROM FixtureTable", function(err, result, fields){
-    if(err) callback(500, err);
-    else callback(200, result);
-  });
+module.exports.readFixtures = () => {
+    return db.read('FixtureTable');
 };
 
-module.exports.readFixture = (connection, fixtureID, callback) => {
-      connection.query("SELECT * FROM FixtureTable WHERE fixtureID=" + fixtureID + " LIMIT 1", function(err, result, fields){
-    if (err) callback(500, err);
-    else callback(200, result[0]);
-  });
+module.exports.readFixture = (fixtureID) => {
+    return db.read('FixtureTable', {condition: `fixtureID=${fixtureID}`, limit: 1});
 };
 
-module.exports.readFixturesPerUmpire = (connection, umpireID, callback) => {
-  connection.query(`SELECT fixtureFK FROM FixtureJunction WHERE umpireFK=${umpireID}`, (err, result) => {
-    if(err) callback(500, err);
-    else{
-      var completedResult = [];
-      result.forEach(({fixtureFK}) => module.exports.readFixture(connection, fixtureFK, (status, result) => {
-        if (status === 500) callback(500, result);
-        else completedResult.push(result);
-      }));
-      callback(200, completedResult);
+module.exports.readFixturesPerUmpire = async (umpireID) => {
+    try {
+        var fixtures = await db.read('FixtureJunction', {columns: 'fixtureFK', condition: `umpireFK=${umpireID}`});
+        var result = Promise.all(fixtures.map(async ({fixtureFK}) => {
+            return await db.read('FixtureTable', {condition: `fixtureID=${fixtureFK}`, limit: 1});
+        }));
+        return Promise.resolve(result);
+    } catch(e){
+        return Promise.reject(e);
     }
-  });
 };
 
-module.exports.readUmpiresPerFixture = (connection, fixtureID, callback) => {
-  connection.query(`SELECT umpireFK FROM FixturesJunction WHERE fixtureFK=${fixtureID}`, (err, result) => {
-    if(err) callback(500, err);
-    else{
-            var completedResult = [];
-            result.forEach(({umpireFK}) => umpireCRUD.readUmpire(connection, umpireFK, (status, result) => {
-              if (status === 500) callback(500, result);
-              else completedResult.push(result);
-            }));
-            callback(200, completedResult);
+module.exports.readUmpiresPerFixture = async (fixtureID) => {
+    try {
+        var umpires = await db.read('FixtureJunction', {columns: 'umpireFK', condition: `fixtureFK=${fixtureID}`});
+        var result = Promise.all(umpires.map(async ({umpireFK}) => {
+            return await db.read('UmpireTable', {condition: `umpireID=${umpireFK}`, limit: 1});
+        }));
+        return Promise.resolve(result);
+    } catch(e){
+        return Promise.reject(e);
     }
-  });
 }
 
-module.exports.createFixture = (connection, fixture, callback) => {
-  connection.query("INSERT INTO FixtureTable (DateTime, homeTeamFK, awayTeamFK, venueFK, leagueFK, TimeSlot, NoOfUmpires) VALUES ?", [fixture.DateTime, fixture.homeTeamFK, fixture.awayTeamFK, fixture.venueFK, fixture.leagueFK, fixture.TimeSlot, fixture.NoOfUmpires], function(err, result, fields){
-    if (err) callback(500, err);
-    else callback(200, result.insertId);
-  });
+module.exports.createFixture = (fixture) => {
+   return db.create('FixtureTable', fixture, {returnRow: true, idSelector: 'fixtureID'});
 };
 
-module.exports.updateFixture = (connection, fixtureID, fixture, callback) => {
-connection.query(`UPDATE FixtureTable SET DateTime='${fixture.DateTime}', homeTeamFK=${fixture.homeTeamFK}, awayTeamFK=${fixture.awayTeamFK}, venueFK=${fixture.venueFK}, leagueFK=${fixture.leagueFK}, TimeSlot=${fixture.TimeSlot}, NoOfUmpires=${fixture.NoOfUmpires} WHERE fixtureID=${fixtureID}`, function(err, result, fields){
-    if (err) callback(500, err);
-    else callback(200, result.insertId);
-  });
+module.exports.updateFixture = (fixtureID, fixture) => {
+    return db.update('FixtureTable', fixture, {returnRow: true, idSelector: 'fixtureID', id: fixtureID});
 };
 
-module.exports.deleteFixture = (connection, fixtureID, callback) => {
-res.locals.connection.query(`DELETE FROM FixtureTable WHERE fixtureID=${fixtureID}`, function(err, result, fields){
-    if (err) callback(500, err);
-    else callback(200, true);
-  });
+module.exports.deleteFixture = (fixtureID) => {
+    return db.delete('FixtureTable', {id: fixtureID, idSelector: 'fixtureID'});
 };
 
 

@@ -1,12 +1,11 @@
-var express = require('express');
-var router = express.Router();
+
 var db = require('../database');
 module.exports.readDivisions = () => {
     return db.read('DivisionTable');
 };
 
 module.exports.readDivision = (divisionID) => {
-    return db.read('DivisionTable', {condition: `divisionID=${divisionID}`});
+    return db.read('DivisionTable', {condition: `divisionID=${divisionID}`, limit: 1});
 };
 
 module.exports.createDivision = (division) => {
@@ -22,5 +21,6 @@ module.exports.deleteDivision = (divisionID) => {
     return db.delete('DivisionTable', {idSelector: 'divisionID', id: divisionID});
 
 };
+
 
 

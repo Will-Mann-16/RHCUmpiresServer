@@ -1,54 +1,22 @@
-var express = require('express');
-var router = express.Router();
+var db = require('../database');
 
-module.exports.readQualifications = (connection, callback) => {
-  connection.query("SELECT * FROM QualificationTable", function(err, result, fields){
-    if(err) callback(500, err);
-    else callback(200, result);
-  });
+module.exports.readQualifications = () => {
+    return db.read('QualificationTable');
 };
-module.exports.readUmpireQualifiaction = (connection, umpireID, callback) => {
-  connection.query(`SELECT qualificationFK FROM QualificationJunction WHERE umpireFK=${umpireID}`, function (err, result, fields) {
-    if (err) callback(500, err);
-    else {
-      var finalResult = [];
-      result.forEach(({qualificationFK}) => {
-          module.exports.readQualification(connection, qualificationFK, (status, result) => {
-            if (status === 500) callback(500, err);
-            else finalResult.push(result);
-          });
-      });
-      callback(200, finalResult);
-    }
-  });
+module.exports.readQualification = (qualificationID) => {
+    return db.read('QualificationTable', {condition: `qualificationID=${qualificationID}`, limit: 1});
 };
 
-module.exports.readQualification = (connection, qualificationID, callback) => {
-  connection.query("SELECT * FROM QualificationTable WHERE qualificationID=" + qualificationID + " LIMIT 1", function(err, result, fields){
-    if (err) callback(500, err);
-    else callback(200, result[0]);
-  });
+module.exports.createQualification = (qualification) => {
+    return db.create('QualificationTable', qualification, {returnRow: true, idSelector: 'qualificationID'});
 };
 
-module.exports.createQualification = (connection, qualification, callback) => {
-  connection.query("INSERT INTO QualificationTable (Name) VALUES ?", [qualification.Name], function(err, result, fields){
-    if (err) callback(500, err);
-    else callback(200, result.insertId);
-  });
+module.exports.updateQualification = (qualificationID, qualification) => {
+    return db.update('QualificationTable', qualification, {returnRow: true, idSelector: 'qualificationID', id: qualificationID});
 };
 
-module.exports.updateQualification = (connection, qualificationID, qualification, callback) => {
-  connection.query(`UPDATE QualificationTable SET Name='${qualification.Name}' WHERE qualificationID=${qualificationID}`, function(err, result, fields){
-        if (err) callback(500, err);
-        else callback(200, result.insertId);
-  });
-};
-
-module.exports.deleteQualification = (connection, qualificationID, callback) => {
-  connection.query(`DELETE FROM QualificationTable WHERE qualificationID=${qualificationID}`, function(err, result, fields){
-    if (err) callback(500, err);
-    else callback(200, true);
-  });
-};
+module.exports.deleteQualification = (qualificationID,) => {
+    return db.delete('QualificationTable', {id: qualificationID, idSelector: 'qualificationID'});
+});
 
 

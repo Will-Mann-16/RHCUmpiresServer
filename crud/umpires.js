@@ -26,24 +26,15 @@ connection.query("SELECT * FROM UmpireTable WHERE umpireID=" + umpireID + " LIMI
 };
 
 module.exports.createUmpire = (connection, umpire, callback) => {
-  connection.query("INSERT INTO UmpireTable (Firstname, Surname, Email, PhoneNumber, Password) VALUES ?", [req.body.Firstname, req.body.Surname, req.body.Email, req.body.PhoneNumber, req.body.Password], function(err, result, fields){
-    if (err) callback(500, err);
-    else callback(200, result.insertId);
-  });
+    return db.create('FixtureTable', fixture, {returnRow: true, idSelector: 'fixtureID'});
 };
 
 module.exports.updateUmpire = (connection, umpireID, umpire, callback) => {
-  connection.query(`UPDATE UmpireTable SET Firstname=${umpire.Firstname}, Surname=${umpire.Surname}, Email=${umpire.Email}, PhoneNumber=${umpire.PhoneNumber}, Password=${umpire.Password} WHERE umpireID=${umpireID}`, function(err, result, fields){
-    if (err) callback(500, err);
-    else callback(200, result.insertId);
-  });
+    return db.update('FixtureTable', fixture, {returnRow: true, idSelector: 'fixtureID', id: fixtureID});
 };
 
 module.exports.deleteUmpire = (connection, umpireID, callback) => {
-  connection.query(`DELETE FROM UmpireTable WHERE umpireID=${umpireID}`, function(err, result, fields){
-    if (err) callback(500, err);
-    else callback(200, true);
-  });
+    return db.delete('FixtureTable', {id: fixtureID, idSelector: 'fixtureID'});
 };
 
 

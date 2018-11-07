@@ -1,5 +1,4 @@
-var express = require('express');
-var router = express.Router();
+
 var db = require('../database');
 
 module.exports.readClubs = () => {
@@ -7,7 +6,7 @@ module.exports.readClubs = () => {
 };
 
 module.exports.readClub = (clubID) => {
-  return db.read('ClubTable', {condition: `clubID=${clubID}`});
+  return db.read('ClubTable', {condition: `clubID=${clubID}`, limit: 1});
 };
 
 module.exports.createClub = (club) => {
