@@ -10,10 +10,12 @@ passport.use(new LocalStrategy({
     passwordField: 'password'
 }, async (email, password, callback) => {
     try {
-        var user = await db.read('umpiretable', {limit: 1, condition: `Email='${email}'`});
+        var user = await db.read('UmpireTable', {limit: 1, condition: `Email='${email}'`});
         if (user) {
             var result = await bcrypt.compare(password, user.Password);
+            delete user.Password;
             if(result){
+                delete user.Password;
                 callback(null, user);
             } else {
                 callback(null, false);
@@ -30,5 +32,8 @@ passport.use(new JWTStrategy({
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: JWT_ENCRYPTION
 }, (jwtPayload, callback) => {
-    db.read('umpiretable', {limit: 1, condition: `umpireID='${jwtPayload.umpireID}'`}).then(response => callback(null, response)).catch(err => callback(err, null));
+    db.read('UmpireTable', {limit: 1, condition: `umpireID='${jwtPayload.umpireID}'`}).then(response => {
+        delete response.Password;
+        callback(null, response);
+    }).catch(err => callback(err, null));
 }));

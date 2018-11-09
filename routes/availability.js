@@ -2,22 +2,16 @@ var express = require('express');
 var router = express.Router();
 var availabilityCRUD = require('../crud/availability');
 
-router.get('/availability-page/:umpireID', (req, res) => {
-    availabilityCRUD.readAvailabilityPerUmpire(req.params.umpireID, (status, result) => {
-        res.status(status).json(status === 500 ? {error: result} : {fixtures: result});
-    });
+router.get('/', (req, res) => {
+    availabilityCRUD.readAvailabilityPerUmpire(req.user.umpireID).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 router.post('/', (req, res) => {
-    availabilityCRUD.createAvailability(req.body.availability, (status, result) => {
-        res.status(status).json(status === 500 ? {error: result} : {availabilityID: result});
-    });
+    availabilityCRUD.createAvailability(req.body.availability).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 router.post('/:availabilityID', (req, res) => {
-    availabilityCRUD.updateAvailabilty(req.params.availabilityID, req.body.availability, (status, result) => {
-        res.status(status).json(status === 500 ? {error: result} : {availabilityID: result});
-    });
+    availabilityCRUD.updateAvailability(req.params.availablityID, req.body.availablilty)
 });
 
 router.delete('/:availabilityID', function(req, res){

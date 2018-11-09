@@ -1,40 +1,46 @@
-var qualificationCRUD = require("./qualifications");
+var db = require('../database');
 
-module.exports.readUmpires = (connection, callback) => {
-  connection.query("SELECT * FROM UmpireTable", function(err, result){
-    if(err) callback(500, err);
-    else{
-      var umpires = [];
-      result.map(umpire => {
-        qualificationCRUD.readUmpireQualifiaction(connection, umpire.umpireID, (status, result) => {
-          if(status === 500) callback(500, result);
-          else umpires.push({...umpire, result});
-        });
-      });
+module.exports.readUmpires = async () => {
+  try{
+    var umpires = await db.read('UmpireTable');
+    umpires = await Promise.all(umpires.map(async (umpire) => {
+      delete umpire.Password;
+      var qualificationKeys = await db.read('QualificationsJunction', {condition: `umpireFK=${umpireID}`});
+      var qualifications = await Promise.all(qualificationKeys.map(async ({qualificationFK}) => {
+        return db.read('QualificationTable', {condition: `qualificationID=${qualificationFK}`, limit: 1});
+      }));
+      return {...umpire, qualifications};
+    }));
+    return Promise.resolve(umpires);
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+
+module.exports.readUmpire = async (umpireID) => {
+    try{
+        var umpire = await db.read('UmpireTable', {condition: `umpireID=${umpireID}`, limit: 1});
+        delete umpire.Password;
+        var qualificationKeys = await db.read('QualificationsJunction', {condition: `umpireFK=${umpireID}`});
+        var qualifications = await Promise.all(qualificationKeys.map(async ({qualificationFK}) => {
+            return db.read('QualificationTable', {condition: `qualificationID=${qualificationFK}`, limit: 1});
+        }));
+        return Promise.resolve({...umpire, qualifications});
+    } catch (e) {
+        return Promise.reject(e);
     }
-  });
 };
 
-module.exports.readUmpire = (connection, umpireID, callback) => {
-connection.query("SELECT * FROM UmpireTable WHERE umpireID=" + umpireID + " LIMIT 1", function(err, result, fields){
-    if (err) callback(500, err);
-    else qualificationCRUD.readUmpireQualifiaction(connection, umpireID, (status, qualifications) => {
-      if (status === 500) callback(500, qualifications);
-      else callback(200, {...result[0], qualifications});
-    });
-  });
+module.exports.createUmpire = (umpire) => {
+    return db.create('UmpireTable', umpire, {returnRow: true, idSelector: 'umpireID'});
 };
 
-module.exports.createUmpire = (connection, umpire, callback) => {
-    return db.create('FixtureTable', fixture, {returnRow: true, idSelector: 'fixtureID'});
+module.exports.updateUmpire = (umpireID, umpire) => {
+    return db.update('UmpireTable', umpire, {returnRow: true, idSelector: 'umpireID', id: umpireID});
 };
 
-module.exports.updateUmpire = (connection, umpireID, umpire, callback) => {
-    return db.update('FixtureTable', fixture, {returnRow: true, idSelector: 'fixtureID', id: fixtureID});
-};
-
-module.exports.deleteUmpire = (connection, umpireID, callback) => {
-    return db.delete('FixtureTable', {id: fixtureID, idSelector: 'fixtureID'});
+module.exports.deleteUmpire = (umpireID) => {
+    return db.delete('UmpireTable', {id: umpireID, idSelector: 'umpireID'});
 };
 
 
