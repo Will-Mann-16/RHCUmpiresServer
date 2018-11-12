@@ -2,10 +2,10 @@ var mysql = require('mysql');
 var {DB_HOST, DB_USER, DB_PASS, DB_DBNAME} = require('./config');
 
 
+
 class Database {
     constructor(host, user, password, database){
         this.conn = mysql.createConnection({host, user, password, database});
-        this.conn.connect();
     }
     query(query, values=[]){
         return new Promise((resolve, reject) => {
@@ -28,7 +28,7 @@ class Database {
             }
         });
     }
-    create(table='', values={}, options={returnRow: false, columns: '*', idSelector: 'ID'}){
+    create(table='', values={}, {returnRow=false, columns='*', idSelector='ID'}){
         return new Promise((resolve, reject) => {
             var colNames = [];
             var colValues = [];
@@ -38,8 +38,8 @@ class Database {
             });
             var query = `INSERT INTO ${table} (${colNames.join(',')}) VALUES ?`;
             this.query(query, colValues).then(response => {
-                if (options.returnRow) {
-                    query = `SELECT ${options.columns} FROM ${table} WHERE ${options.idSelector}=${response.insertId} LIMIT 1`;
+                if (returnRow) {
+                    query = `SELECT ${columns} FROM ${table} WHERE ${idSelector}=${response.insertId} LIMIT 1`;
                     this.query(query).then(response => resolve(response[0])).catch(err => reject(err));
                 } else {
                     resolve(response.insertId);
@@ -47,20 +47,20 @@ class Database {
             }).catch(err => reject(err));
         });
     }
-    read(table='', options={columns: '*', limit: 0, condition: '', orderBy: ''}){
+    read(table='', {columns='*', limit=0, condition='', orderBy=''}){
         return new Promise((resolve, reject) => {
-            var query = `SELECT ${options.columns} FROM ${table}`;
-            if(options.condition !== ''){
-                query += ` WHERE ${options.condition}`;
+            var query = `SELECT ${columns} FROM ${table}`;
+            if(condition !== ''){
+                query += ` WHERE ${condition}`;
             }
-            if(options.orderBy !== ''){
-                query += ` ORDER BY ${options.orderBy}`;
+            if(orderBy !== ''){
+                query += ` ORDER BY ${orderBy}`;
             }
-            if(options.limit > 0){
-                query += ` LIMIT ${options.limit}`;
+            if(limit > 0){
+                query += ` LIMIT ${limit}`;
             }
             this.query(query).then(response => {
-                if(options.limit === 1){
+                if(limit === 1){
                     if(response.length > 0){
                         resolve(response[0]);
                     } else {
@@ -73,15 +73,15 @@ class Database {
             }).catch(err => reject(err));
         });
     }
-    update(table='', values={}, options={returnRow: false, columns: '*', idSelector: 'ID', id: -1, whereClause: ''}){
+    update(table='', values={}, {returnRow=false, columns='*', idSelector='ID', id=-1, whereClause=''}){
         return new Promise(((resolve, reject) => {
             var set = Object.entries(values).map((key, value) => {
                return `${key}=${value}`;
             });
-            var query = `UPDATE ${table} SET ${set.join(',')} WHERE ${options.whereClause !== '' ? options.whereClause : `${options.idSelector}=${options.id}`}`;
+            var query = `UPDATE ${table} SET ${set.join(',')} WHERE ${whereClause !== '' ? whereClause : `${idSelector}=${id}`}`;
             this.query(query, colValues).then(response => {
-                if (options.returnRow){
-                    query = `SELECT ${options.columns} FROM ${table} WHERE ${options.idSelector}=${response.insertId} LIMIT 1`;
+                if (returnRow){
+                    query = `SELECT ${columns} FROM ${table} WHERE ${idSelector}=${response.insertId} LIMIT 1`;
                     this.query(query).then(response => resolve(response[0])).catch(err => reject(err));
                 } else {
                     resolve(response.insertId);
@@ -89,9 +89,9 @@ class Database {
             }).catch(err => reject(err));
         }));
     }
-    delete(table, options={whereClause: '', idSelector: 'ID', id: -1}){
+    delete(table, {whereClause='', idSelector='ID', id=-1}){
         return new Promise((resolve, reject) => {
-            var query = `DELETE FROM ${table} WHERE ${options.whereClause !== '' ? options.whereClause : `${options.idSelector}=${options.id}`}`;
+            var query = `DELETE FROM ${table} WHERE ${whereClause !== '' ? whereClause : `${idSelector}=${id}`}`;
             this.query(query).then(response => resolve(response.affectedRows)).catch(err => reject(err));
         });
     }

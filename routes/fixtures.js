@@ -6,76 +6,54 @@ var venueCRUD = require("../crud/venues");
 var leagueCRUD = require("../crud/leagues");
 var {convertFromPacket} = require("../functions");
 
-router.get('/', function(req, res) {
-  fixturesCRUD.readFixtures(res.locals.connection, (status, result) => {
-    if(status === 500) res.status(status).json({error: result});
-    else{
-      var finalResult = [];
-      result.forEach(fixture => {
-        teamCRUD.readTeamAndClub(res.locals.connection, fixture.homeTeamFK, (status, homeTeam) => {
-            if(status === 500) res.status(status).json({error: homeTeam});
-            else teamCRUD.readTeamAndClub(res.locals.connection, fixture.awayTeamFK, (status, awayTeam) => {
-                if(status === 500) res.status(status).json({error: awayTeam});
-                else venueCRUD.readVenue(res.locals.connection, fixture.venueFK, (status,venue) => {
-                      if(status === 500) res.status(status).json({error: venue});
-                      else leagueCRUD.readLeague(res.locals.connection, fixture.leagueFK, (status, league) => {
-                          if(status === 500) res.status(status).json({error: venue});
-                          else finalResult.push(convertFromPacket({...fixture, homeTeam, awayTeam, venue, league}));
-                          if(finalResult.length === result.length){
-                            res.status(200).json({fixtures: finalResult});
-                          }
-                      });
-                });
-            });
-        });
-      });
+router.get('/', async function(req, res) {
+    try {
+        var fixtures = await fixturesCRUD.readFixtures();
+        fixtures = await Promise.all(fixtures.map(async (fixture) => {
+            var umpires = await fixturesCRUD.readUmpiresPerFixture(fixture.fixtureID);
+            var homeTeam = await teamCRUD.readTeamAndClub(fixture.homeTeamFK);
+            var awayTeam = await teamCRUD.readTeamAndClub(fixture.awayTeamFK);
+            var venue = await venueCRUD.readVenue(fixture.venueFK);
+            var league = await leagueCRUD.readLeagueAndDivision(fixture.leagueFK);
+            return {...fixture, Umpires: umpires, HomeTeam: homeTeam, AwayTeam: awayTeam, Venue: venue, League: league};
+        }));
+        res.status(200).json(fixtures);
+    } catch (e) {
+        res.status(500).json(e);
     }
-  });
 });
 
 router.get('/:fixtureID', function(req, res) {
-  res.locals.connection.query("SELECT * FROM FixtureTable WHERE fixtureID=" + req.params.fixtureID + " LIMIT 1", function(err, result, fields){
-    if (err) return res.status(500).json({ error: err });
-    return res.status(200).json({fixture: result[0]});
-  });
+  fixturesCRUD.readFixture(req.params.fixtureID).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
-router.get('/per-umpire/:umpireID', function(req, res){
-  fixturesCRUD.readFixturesPerUmpire(res.locals.connection, req.params.umpireID, (status, result) => {
-    if(status === 500) res.status(500).json({error: result});
-    else{
-      result.forEach((fixture) => {
-        fixtures.CRUD.readUmpiresPerFixture(res.locals.connection, fixture.fixtureID, (status, result) => {
-              if(status === 500) res.status(500).json({error: result});
-              else{
-                var umpires = result;
-                //TODO add home/away team, league and venue queries
-              }
-        });
-      });
+router.get('/per-umpire/:umpireID', async function(req, res){
+    try {
+        var fixtures = await fixturesCRUD.readFixturesPerUmpire(req.params.umpireID);
+        fixtures = await Promise.all(fixtures.map(async (fixture) => {
+            var umpires = await fixturesCRUD.readUmpiresPerFixture(fixture.fixtureID);
+            var homeTeam = await teamCRUD.readTeamAndClub(fixture.homeTeamFK);
+            var awayTeam = await teamCRUD.readTeamAndClub(fixture.awayTeamFK);
+            var venue = await venueCRUD.readVenue(fixture.venueFK);
+            var league = await leagueCRUD.readLeagueAndDivision(fixture.leagueFK);
+            return {...fixture, Umpires: umpires, HomeTeam: homeTeam, AwayTeam: awayTeam, Venue: venue, League: league};
+        }));
+        res.status(200).json(fixtures);
+    } catch (e) {
+        res.status(500).json(e);
     }
-  });
 });
 
 router.post('/', function(req, res){
-  res.locals.connection.query("INSERT INTO FixtureTable (DateTime, homeTeamFK, awayTeamFK, venueFK, leagueFK, TimeSlot, NoOfUmpires) VALUES ?", [req.body.DateTime, req.body.homeTeamFK, req.body.awayTeamFK, req.body.venueFK, req.body.leagueFK, req.body.TimeSlot, req.body.NoOfUmpires], function(err, result, fields){
-    if (err) return res.status(500).json({ error: err });
-    return res.status(200).json({fixtureID: result.insertId});
-  });
+  fixturesCRUD.createFixture(req.body.fixture).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 router.post('/:fixtureID', function(req, res){
-  res.locals.connection.query(`UPDATE FixtureTable SET DateTime='${req.body.DateTime}', homeTeamFK=${req.body.homeTeamFK}, awayTeamFK=${req.body.awayTeamFK}, venueFK=${req.body.venueFK}, leagueFK=${req.body.leagueFK}, TimeSlot=${req.body.TimeSlot}, NoOfUmpires=${req.body.NoOfUmpires} WHERE fixtureID=${req.params.fixtureID}`, function(err, result, fields){
-    if (err) return res.status(500).json({ error: err });
-    return res.status(200).json({fixtureID: result.insertId});
-  });
+  fixturesCRUD.updateFixture(req.params.fixtureID, req.body.fixture).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 router.delete('/:fixtureID', function(req, res){
-  res.locals.connection.query(`DELETE FROM FixtureTable WHERE fixtureID=${req.params.fixtureID}`, function(err, result, fields){
-    if (err) return res.status(500).json({ error: err });
-    return res.status(200).json({});
-  });
+    fixturesCRUD.deleteFixture(req.params.fixtureID).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 module.exports = router;

@@ -15,8 +15,7 @@ module.exports.updateQualification = (qualificationID, qualification) => {
     return db.update('QualificationTable', qualification, {returnRow: true, idSelector: 'qualificationID', id: qualificationID});
 };
 
-module.exports.deleteQualification = (qualificationID,) => {
+module.exports.deleteQualification = (qualificationID) => {
     return db.delete('QualificationTable', {id: qualificationID, idSelector: 'qualificationID'});
-});
-
+};
 

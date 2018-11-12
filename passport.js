@@ -12,8 +12,8 @@ passport.use(new LocalStrategy({
     try {
         var user = await db.read('UmpireTable', {limit: 1, condition: `Email='${email}'`});
         if (user) {
+            console.log(user);
             var result = await bcrypt.compare(password, user.Password);
-            delete user.Password;
             if(result){
                 delete user.Password;
                 callback(null, user);
@@ -24,6 +24,7 @@ passport.use(new LocalStrategy({
             callback(null, false);
         }
     } catch(e){
+        console.log(e);
         callback(e, false);
     }
 }));

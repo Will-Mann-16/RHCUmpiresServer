@@ -1,34 +1,25 @@
 var express = require('express');
 var router = express.Router();
+var teamCRUD = require('../crud/teams');
 
 router.get('/', function(req, res) {
-  res.locals.connection.query("SELECT * FROM TeamTable", function(err, result, fields){
-    if(err) return res.status(500).json({error: err});
-  });
+  teamCRUD.readTeams().then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 router.get('/:teamID', function(req, res) {
-  res.locals.connection.query("SELECT * FROM TeamTable WHERE teamID=" + req.params.teamID + " LIMIT 1", function(err, result, fields){
-    if (err) return res.status(500).json({ error: err });
-  });
+  teamCRUD.readTeam(req.params.teamID).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 router.post('/', function(req, res){
-  res.locals.connection.query("INSERT INTO TeamTable (Name, clubFK) VALUES ?", [req.body.Name, req.body.clubFK], function(err, result, fields){
-    if (err) return res.status(500).json({ error: err });
-  });
+  teamCRUD.createTeam(req.body.team).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 router.post('/:teamID', function(req, res){
-  res.locals.connection.query(`UPDATE TeamTable SET Name=${req.body.Name}, clubFK=${req.body.clubFK} WHERE teamID=${req.params.teamID}`, function(err, result, fields){
-    if (err) return res.status(500).json({ error: err });
-  });
+  teamCRUD.updateTeam(req.params.teamID, req.body.team).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 router.delete('/:teamID', function(req, res){
-  res.locals.connection.query(`DELETE FROM TeamTable WHERE teamID=${req.params.teamID}`, function(err, result, fields){
-    if (err) return res.status(500).json({ error: err });
-  });
+  teamsCRUD.deleteTeam(req.params.teamID).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 module.exports = router;

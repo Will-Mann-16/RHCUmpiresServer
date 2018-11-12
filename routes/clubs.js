@@ -3,43 +3,32 @@ var router = express.Router();
 var clubCRUD = require('../crud/clubs');
 var teamCRUD = require('../crud/teams');
 
-router.get('/', function(req, res) {
-  clubCRUD.readClubs(res.locals.connection, (status, clubs) => {
-    if(status === 500) res.status(status).json({error: clubs})
-    else{
-      var result = [];
-      clubs.forEach((club) => {
-        teamCRUD.readTeamsByClub(res.locals.connection, club.clubID, (status, teams) => {
-          if(status === 500) res.status(status).json({error: teams});
-          else result.push({...club, teams});
-        });
-      });
+router.get('/', async (req, res) => {
+    try {
+        var clubs = await clubCRUD.readClubs();
+        clubs = await Promise.all(clubs.map(async ({clubID}) => {
+            return teamCRUD.readTeamsByClub(clubID);
+        }));
+        res.status(200).json(clubs);
+    } catch (e) {
+        res.status(500).json(e);
     }
-  });
 });
 
-router.get('/:clubID', function(req, res) {
-    clubCRUD.readClub(res.locals.connection, req.params.clubID, (status, result) => {
-        res.status(status).json(status === 500 ? {error: result} : {club: result});
-    });
+router.get('/:clubID', (req, res) => {
+    clubCRUD.readClub(req.params.clubID).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
-router.post('/', function(req, res){
-    clubCRUD.createClub(res.locals.connection, req.body.club, (status, result) => {
-        res.status(status).json(status === 500 ? {error: result} : {clubID: result});
-    });
+router.post('/', (req, res) => {
+    clubCRUD.createClub(req.body.club).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
-router.post('/:clubID', function(req, res){
-      clubCRUD.updateClub(res.locals.connection, req.params.clubID, req.body.club, (status, result) => {
-        res.status(status).json(status === 500 ? {error: result} : {clubID: result});
-    });
+router.post('/:clubID', (req, res) => {
+      clubCRUD.updateClub(req.params.clubID, req.body.club).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
-router.delete('/:clubID', function(req, res){
-    clubCRUD.deleteClub(res.locals.connection, req.params.clubID, (status, result) => {
-        res.status(status).json(status === 500 ? {error: result} : {success: result});
-    });
+router.delete('/:clubID', (req, res) => {
+    clubCRUD.deleteClub(req.params.clubID).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 module.exports = router;

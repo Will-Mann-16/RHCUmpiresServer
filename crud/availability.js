@@ -1,6 +1,6 @@
 
 var moment = require('moment');
-var db = require('./database');
+var db = require('../database');
 
 module.exports.readAvailabilityPerUmpire = async (umpire) => {
     try {

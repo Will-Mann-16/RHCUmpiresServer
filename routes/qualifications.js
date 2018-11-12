@@ -1,34 +1,25 @@
 var express = require('express');
 var router = express.Router();
+var qualificationsCRUD = require('../crud/qualifications');
 
 router.get('/', function(req, res) {
-  res.locals.connection.query("SELECT * FROM QualificationTable", function(err, result, fields){
-    if(err) return res.status(500).json({error: err});
-  });
+  qualificationsCRUD.readQualifications().then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 router.get('/:qualificationID', function(req, res) {
-  res.locals.connection.query("SELECT * FROM QualificationTable WHERE qualificationID=" + req.params.qualificationID + " LIMIT 1", function(err, result, fields){
-    if (err) return res.status(500).json({ error: err });
-  });
+  qualificationsCRUD.readQualification(req.params.qualificationID).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 router.post('/', function(req, res){
-  res.locals.connection.query("INSERT INTO QualificationTable (Name) VALUES ?", [req.body.Name], function(err, result, fields){
-    if (err) return res.status(500).json({ error: err });
-  });
+  qualificationsCRUD.createQualification(req.body.qualification).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 router.post('/:qualificationID', function(req, res){
-  res.locals.connection.query(`UPDATE QualificationTable SET Name='${req.body.Name}' WHERE qualificationID=${req.params.qualificationID}`, function(err, result, fields){
-    if (err) return res.status(500).json({ error: err });
-  });
+  qualificationsCRUD.updateQualification(req.params.qualificationID, req.body.qualification).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 router.delete('/:qualificationID', function(req, res){
-  res.locals.connection.query(`DELETE FROM QualificationTable WHERE qualificationID=${req.params.qualificationID}`, function(err, result, fields){
-    if (err) return res.status(500).json({ error: err });
-  });
+  qualificationsCRUD.deleteQualification(req.params.qualificationID);
 });
 
 module.exports = router;

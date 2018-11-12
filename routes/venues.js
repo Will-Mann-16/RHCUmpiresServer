@@ -1,33 +1,24 @@
 var express = require('express');
 var router = express.Router();
+var venueCRUD = require('../crud/venues');
 
 router.get('/', function(req, res) {
-  res.locals.connection.query("SELECT * FROM VenueTable", function(err, result, fields){
-    if(err) return res.status(500).json({error: err});
-  });
+  venueCRUD.readVenues();
 });
 
 router.get('/:venueID', function(req, res) {
-  res.locals.connection.query("SELECT * FROM VenueTable WHERE venueID=" + req.params.venueID + " LIMIT 1", function(err, result, fields){
-    if (err) return res.status(500).json({ error: err });
-  });
+  venueCRUD.readVenue(req.params.venueID).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 router.post('/', function(req, res){
-  res.locals.connection.query("INSERT INTO VenueTable (Name, Address) VALUES ?", [req.body.Name, req.body.Address], function(err, result, fields){
-    if (err) return res.status(500).json({ error: err });
-  });
+  venueCRUD.createVenue(req.body.venue).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 router.post('/:venueID', function(req, res){
-  res.locals.connection.query(`UPDATE VenueTable SET Name='${req.body.Name}', Address='${req.body.Address}' WHERE venueID=${req.params.venueID}`, function(err, result, fields){
-    if (err) return res.status(500).json({ error: err });
-  });
+  venueCRUD.updateVenue(req.params.venueID, req.body.venue).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 router.delete('/:venueID', function(req, res){
-  res.locals.connection.query(`DELETE FROM VenueTable WHERE venueID=${req.params.venueID}`, function(err, result, fields){
-    if (err) return res.status(500).json({ error: err });
-  });
+  venueCRUD.deleteVenue(req.params.venueID);
 });
 
 module.exports = router;
