@@ -1,7 +1,7 @@
 
 var db = require('../database');
 module.exports.readDivisions = () => {
-    return db.read('DivisionTable');
+    return db.read('DivisionTable', {});
 };
 
 module.exports.readDivision = (divisionID) => {

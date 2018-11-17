@@ -11,13 +11,11 @@ router.post('/', (req, res) => {
 });
 
 router.post('/:availabilityID', (req, res) => {
-    availabilityCRUD.updateAvailability(req.params.availablityID, req.body.availablilty)
+    availabilityCRUD.updateAvailability(req.params.availablityID, req.body.availablilty).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 router.delete('/:availabilityID', function(req, res){
-    availabilityCRUD.deleteAvailability(req.params.availabilityID, (status, result) => {
-        res.status(status).json(status === 500 ? {error: result} : {success: result});
-    });
+    availabilityCRUD.deleteAvailability(req.params.availabilityID).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 module.exports = router;

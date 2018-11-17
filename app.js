@@ -3,6 +3,7 @@ var bodyParser = require('body-parser');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var passport = require('passport');
+var cors = require('cors');
 var {PORT} = require('./config');
 
 var authRoutes = require('./routes/auth');
@@ -32,6 +33,9 @@ require('./passport');
 var app = express();
 
 app.use(logger('dev'));
+
+app.use(cors());
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());

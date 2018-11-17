@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 
 const {JWT_ENCRYPTION, JWT_EXPIRY} = require('../config');
 router.post('/login', (req, res) => {
-    passport.authenticate('local', {session: false}, (err, user, staff) => {
+    passport.authenticate('local', {session: false}, (err, user) => {
         if(err || !user){
             return res.status(200).json({
                 success: false,

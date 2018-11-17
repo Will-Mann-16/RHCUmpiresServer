@@ -19,7 +19,7 @@ router.post('/:qualificationID', function(req, res){
 });
 
 router.delete('/:qualificationID', function(req, res){
-  qualificationsCRUD.deleteQualification(req.params.qualificationID);
+  qualificationsCRUD.deleteQualification(req.params.qualificationID).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 module.exports = router;

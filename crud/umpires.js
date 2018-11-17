@@ -2,14 +2,14 @@ var db = require('../database');
 
 module.exports.readUmpires = async () => {
   try{
-    var umpires = await db.read('UmpireTable');
+    var umpires = await db.read('UmpireTable', {});
     umpires = await Promise.all(umpires.map(async (umpire) => {
       delete umpire.Password;
-      var qualificationKeys = await db.read('QualificationsJunction', {condition: `umpireFK=${umpireID}`});
+      var qualificationKeys = await db.read('QualificationJunction', {condition: `umpireFK=${umpireID}`});
       var qualifications = await Promise.all(qualificationKeys.map(async ({qualificationFK}) => {
         return db.read('QualificationTable', {condition: `qualificationID=${qualificationFK}`, limit: 1});
       }));
-      return {...umpire, qualifications};
+      return {...umpire, Admin: umpire.Admin === 'true', Qualifications: qualifications};
     }));
     return Promise.resolve(umpires);
   } catch (e) {
@@ -21,14 +21,15 @@ module.exports.readUmpire = async (umpireID) => {
     try{
         var umpire = await db.read('UmpireTable', {condition: `umpireID=${umpireID}`, limit: 1});
         delete umpire.Password;
-        var qualificationKeys = await db.read('QualificationsJunction', {condition: `umpireFK=${umpireID}`});
+        delete umpire.Admin;
+        var qualificationKeys = await db.read('QualificationJunction', {condition: `umpireFK=${umpireID}`});
         var qualifications = await Promise.all(qualificationKeys.map(async ({qualificationFK}) => {
             return db.read('QualificationTable', {condition: `qualificationID=${qualificationFK}`, limit: 1});
         }));
-        return Promise.resolve({...umpire, qualifications});
+        return Promise.resolve({...umpires, Qualifications: qualifications});
     } catch (e) {
         return Promise.reject(e);
-    }
+    }3
 };
 
 module.exports.createUmpire = (umpire) => {

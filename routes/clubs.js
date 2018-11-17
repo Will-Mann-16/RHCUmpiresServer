@@ -6,8 +6,8 @@ var teamCRUD = require('../crud/teams');
 router.get('/', async (req, res) => {
     try {
         var clubs = await clubCRUD.readClubs();
-        clubs = await Promise.all(clubs.map(async ({clubID}) => {
-            return teamCRUD.readTeamsByClub(clubID);
+        clubs = await Promise.all(clubs.map(async (club) => {
+            return {...club, Teams: await teamCRUD.readTeamsByClub(club.clubID)};
         }));
         res.status(200).json(clubs);
     } catch (e) {

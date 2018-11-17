@@ -2,7 +2,7 @@
 var db = require('../database');
 
 module.exports.readClubs = () => {
-  return db.read('ClubTable');
+  return db.read('ClubTable', {});
 };
 
 module.exports.readClub = (clubID) => {

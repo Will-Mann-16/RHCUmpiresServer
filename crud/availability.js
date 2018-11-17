@@ -5,7 +5,7 @@ var db = require('../database');
 module.exports.readAvailabilityPerUmpire = async (umpire) => {
     try {
         var fixtures = await db.read('FixtureTable', {condition: 'DateTime > CURRENT_TIMESTAMP'});
-        var availability = await Promise.all(fixures.map(async (fixture, key) => {
+        var availability = await Promise.all(fixtures.map(async (fixture) => {
             try {
                 var noOfUmpires = await db.query(`SELECT COUNT(*) FROM FixtureJunction WHERE fixtureFK=${fixture.fixtureID}`);
                 if (noOfUmpires < fixture.NoOfUmpires) {
@@ -14,7 +14,7 @@ module.exports.readAvailabilityPerUmpire = async (umpire) => {
                             condition: `fixtureFK=${fixture.fixtureID} AND umpireFK=${user.umpireID}`,
                             limit: 1
                         });
-                        return {...fixture, Availability: available};
+                        return {...fixture, Available: available.Available ? available.Available : 'UNDECIDED', availabilityID: available.availabilityID ? available.availabilityID : -1};
                     } catch (e) {
                         return null;
                     }
@@ -45,7 +45,7 @@ module.exports.createAvailability = (availability) => {
     return db.create('AvailabilityTable', availability, {idSelector: 'availabilityID', returnRow: true});
 };
 
-module.exports.updateAvailability = (availabilityID, availability) => {
+module.exports.updateAvailability = (s, availability) => {
   return db.update('AvailabilityTable', availability, {idSelector: 'availabilityID', id: availabilityID, returnRow: true})
 };
 

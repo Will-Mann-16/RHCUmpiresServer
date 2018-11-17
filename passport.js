@@ -6,17 +6,16 @@ const {JWT_ENCRYPTION} = require('./config');
 const db = require('./database');
 
 passport.use(new LocalStrategy({
-    usernameField: 'email',
+    usernameField: 'username',
     passwordField: 'password'
 }, async (email, password, callback) => {
     try {
         var user = await db.read('UmpireTable', {limit: 1, condition: `Email='${email}'`});
-        if (user) {
-            console.log(user);
+        if (Object.keys(user).length > 0) {
             var result = await bcrypt.compare(password, user.Password);
             if(result){
                 delete user.Password;
-                callback(null, user);
+                callback(null, {...user, Admin: user.Admin === 'true'});
             } else {
                 callback(null, false);
             }
@@ -24,7 +23,6 @@ passport.use(new LocalStrategy({
             callback(null, false);
         }
     } catch(e){
-        console.log(e);
         callback(e, false);
     }
 }));
@@ -35,6 +33,6 @@ passport.use(new JWTStrategy({
 }, (jwtPayload, callback) => {
     db.read('UmpireTable', {limit: 1, condition: `umpireID='${jwtPayload.umpireID}'`}).then(response => {
         delete response.Password;
-        callback(null, response);
+        callback(null, {...response, Admin: response.Admin === 'true'});
     }).catch(err => callback(err, null));
 }));

@@ -10,11 +10,11 @@ class Database {
     query(query, values=[]){
         return new Promise((resolve, reject) => {
             if(values.length > 0){
-                this.conn.query(query, values, (err, result) => {
+                this.conn.query(query, [values], (err, result) => {
                     if(err){
                         reject(err);
                     } else {
-                        resolve(result);
+                        resolve(JSON.parse(JSON.stringify(result)));
                     }
                 });
             } else {
@@ -22,7 +22,7 @@ class Database {
                     if(err){
                         reject(err);
                     } else {
-                        resolve(result);
+                        resolve(JSON.parse(JSON.stringify(result)));
                     }
                 });
             }
@@ -32,12 +32,12 @@ class Database {
         return new Promise((resolve, reject) => {
             var colNames = [];
             var colValues = [];
-            Object.entries(values).forEach((key, value) => {
-                colNames.push(key);
-                colValues.push(value);
+            Object.entries(values).forEach((value) => {
+                colNames.push(value[0]);
+                colValues.push(`'${value[1]}'`);
             });
-            var query = `INSERT INTO ${table} (${colNames.join(',')}) VALUES ?`;
-            this.query(query, colValues).then(response => {
+            var query = `INSERT INTO ${table} (${colNames.join(',')}) VALUES (${colValues.join(',')})`;
+            this.query(query).then(response => {
                 if (returnRow) {
                     query = `SELECT ${columns} FROM ${table} WHERE ${idSelector}=${response.insertId} LIMIT 1`;
                     this.query(query).then(response => resolve(response[0])).catch(err => reject(err));

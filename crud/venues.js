@@ -1,6 +1,7 @@
+const db = require('../database');
 
 module.exports.readVenues = () => {
-    return db.read('VenueTable');
+    return db.read('VenueTable', {});
 };
 
 module.exports.readVenue = (venueID) => {

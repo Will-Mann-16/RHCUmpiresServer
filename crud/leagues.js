@@ -1,17 +1,21 @@
 var db = require('../database');
 module.exports.readLeagues = () => {
-  return db.read('LeagueTable');
+  return db.read('LeagueTable', {});
 };
 
 module.exports.readLeague = (leagueID) => {
     return db.read('LeagueTable', {condition: `leagueID=${leagueID}`, limit: 1});
 };
 
+module.exports.readLeaguesByDivision = (divisionFK) => {
+    return db.read('LeagueTable', {condition: `divisionFK=${divisionFK}`});
+};
+
 module.exports.readLeagueAndDivision = async (leagueID) => {
   try {
       var league = await db.read('LeagueTable', {condition: `leagueID=${leagueID}`, limit: 1});
       var division = await db.read('DivisionTable', {condition: `divisionID=${league.divisionFK}`, limit: 1});
-      return Promise.resolve({...league, division});
+      return Promise.resolve({...league, Division: division});
   } catch (e){
     return Promise.reject(e);
   }

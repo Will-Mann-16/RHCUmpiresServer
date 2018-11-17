@@ -1,7 +1,7 @@
 var db = require('../database');
 
 module.exports.readQualifications = () => {
-    return db.read('QualificationTable');
+    return db.read('QualificationTable', {});
 };
 module.exports.readQualification = (qualificationID) => {
     return db.read('QualificationTable', {condition: `qualificationID=${qualificationID}`, limit: 1});

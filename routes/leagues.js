@@ -20,7 +20,7 @@ router.post('/:leagueID', function(req, res){
 });
 
 router.delete('/:leagueID', function(req, res){
-  leagueCRUD.deleteLeague(req.params.leagueID);
+  leagueCRUD.deleteLeague(req.params.leagueID).then(response => res.status(200).json(response)).catch(err => res.status(500).json(err));
 });
 
 module.exports = router;
